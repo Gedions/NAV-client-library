@@ -1,13 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+		<!-- Produce a NuGet package when you build -->
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IsPackable>true</IsPackable>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
-  </ItemGroup>
-
+		<!-- Unique ID for your Core package -->
+		<PackageId>Og.Nav.Core</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>Job Gedions</Authors>
+		<Description>Core interfaces and models for NAV client library</Description>
+		<PackageTags>NAV;OData;SOAP;Core</PackageTags>
+		<RepositoryUrl>https://github.com/Gedions/NAV-client-library.git</RepositoryUrl>
+	</PropertyGroup>
 </Project>
