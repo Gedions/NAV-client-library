@@ -4,7 +4,7 @@ This library provides generic OData V4 and SOAP client services for Microsoft Dy
 
 ## Prerequisites
 
-- .NET 6.0 or later
+- .NET 8.0 or later
 - A NAV/BC instance with OData V4 and SOAP web services enabled
 - Valid credentials for basic or token authentication
 
