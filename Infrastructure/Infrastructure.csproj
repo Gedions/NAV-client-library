@@ -9,7 +9,7 @@
 		<!-- this pulls in your project references (Core.dll, Shared.dll) -->
 		<IncludeReferencedProjects>true</IncludeReferencedProjects>
 
-		<PackageId>Nav.Client.Library</PackageId>
+		<PackageId>Og.Nav.Client.Library</PackageId>
 		<Version>1.0.0</Version>
 		<Authors>Job Gedions</Authors>
 		<Company>OGTECHSOLUTIONS</Company>
