@@ -1,0 +1,18 @@
+.vs/
+Application/
+Blazorised/
+BlazorisedTemplateProject/
+ConsoleApp/
+Core/obj
+Core/bin
+Ess/
+GlobalInteractivity/
+Infrastructure/obj
+Infrastructure/bin
+KNLS PORTALS.sln
+Recruitment/
+SecondBlazorised/
+Shared/obj
+Shared/bin
+TestingSoap/
+backup/
