@@ -1,4 +1,5 @@
 ﻿using Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
@@ -8,21 +9,25 @@ namespace Infrastructure.Services
     public class NavSoapServiceFactory : INavSoapServiceFactory
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly ILoggerFactory _loggerFactory;
 
         /// <summary>
         /// Initializes a new instance of <see cref="NavSoapServiceFactory"/>.
         /// </summary>
         /// <param name="clientFactory">The HTTP client factory configured for NAV SOAP.</param>
-        public NavSoapServiceFactory(IHttpClientFactory clientFactory)
+        public NavSoapServiceFactory(IHttpClientFactory clientFactory, ILoggerFactory loggerFactory)
         {
             _clientFactory = clientFactory;
+            _loggerFactory = loggerFactory;
         }
 
         /// <inheritdoc/>
         public INavSoapService<T> Create<T>(string? serviceName = null) where T : class
         {
             var client = _clientFactory.CreateClient("NavSoapClient");
-            return new GenericSoapService<T>(client, serviceName!);
+            var logger = _loggerFactory.CreateLogger<GenericSoapService<T>>();
+
+            return new GenericSoapService<T>(client, serviceName ?? typeof(T).Name, logger);
         }
     }
 }

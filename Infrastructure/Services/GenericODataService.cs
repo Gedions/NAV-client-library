@@ -1,4 +1,5 @@
 ﻿using Core.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,6 +23,11 @@ namespace Infrastructure.Services
         /// </summary>
         protected readonly string _serviceName;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly ILogger<GenericODataService<T>> _logger;
+
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -35,10 +41,17 @@ namespace Infrastructure.Services
         /// <param name="serviceName">
         /// Optional service name; if null, uses the CLR type name of <typeparamref name="T"/>.
         /// </param>
-        public GenericODataService(HttpClient httpClient, string? serviceName = null)
+        /// <param name="logger">
+        /// Optional logger for structured diagnostics. If not provided, no logging will occur.
+        /// </param>
+        public GenericODataService(
+            HttpClient httpClient,
+            string serviceName,
+            ILogger<GenericODataService<T>> logger)
         {
             _httpClient = httpClient;
-            _serviceName = serviceName ?? typeof(T).Name;
+            _serviceName = serviceName;
+            _logger = logger;
         }
 
         /// <inheritdoc/>
@@ -61,11 +74,18 @@ namespace Infrastructure.Services
                 if (!string.IsNullOrEmpty(finalFilter))
                     url += $"?$filter={Uri.EscapeDataString(finalFilter)}";
 
+                _logger?.LogDebug("Fetching entities from {Url}", url);
+
                 var result = await _httpClient.GetFromJsonAsync<ODataResponse<T>>(url, _jsonOptions);
+
+                _logger?.LogInformation("Retrieved {Count} entities from {Service}",
+                    result?.Value?.Count ?? 0, _serviceName);
+
                 return result?.Value ?? new List<T>();
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error retrieving entities from {Service}", _serviceName);
                 throw new Exception($"Failed to retrieve entities: {ex.Message}", ex);
             }
         }
@@ -75,15 +95,25 @@ namespace Infrastructure.Services
         {
             try
             {
-                var result = await _httpClient.GetFromJsonAsync<ODataResponse<T>>(
-                    $"{_serviceName}?$filter={Uri.EscapeDataString(filter)}",
-                    _jsonOptions);
+                var url = $"{_serviceName}?$filter={Uri.EscapeDataString(filter)}";
+                _logger?.LogDebug("Fetching entity by filter from {Url}", url);
 
-                return result?.Value?.FirstOrDefault()
-                    ?? throw new Exception($"No entity found in '{_serviceName}' matching filter: {filter}");
+                var result = await _httpClient.GetFromJsonAsync<ODataResponse<T>>(url, _jsonOptions);
+
+                var entity = result?.Value?.FirstOrDefault();
+
+                if (entity == null)
+                {
+                    _logger?.LogWarning("No entity found in '{Service}' matching filter: {Filter}", _serviceName, filter);
+                    throw new Exception($"No entity found in '{_serviceName}' matching filter: {filter}");
+                }
+
+                _logger?.LogInformation("Entity retrieved successfully from {Service}", _serviceName);
+                return entity;
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error retrieving entity from {Service}", _serviceName);
                 throw new Exception($"Failed to retrieve entity by ID: {ex.Message}", ex);
             }
         }
@@ -93,18 +123,28 @@ namespace Infrastructure.Services
         {
             try
             {
+                _logger?.LogDebug("Creating new entity in {Service}", _serviceName);
+
                 var response = await _httpClient.PostAsJsonAsync(_serviceName, entity, _jsonOptions);
                 response.EnsureSuccessStatusCode();
 
-                return await response.Content.ReadFromJsonAsync<T>(_jsonOptions)
-                    ?? throw new Exception("Response body was empty or malformed.");
+                var created = await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
+                if (created == null)
+                {
+                    throw new Exception("Response body was empty or malformed.");
+                }
+
+                _logger?.LogInformation("Entity created successfully in {Service}", _serviceName);
+                return created;
             }
             catch (HttpRequestException httpEx)
             {
+                _logger?.LogError(httpEx, "HTTP error during creation in {Service}", _serviceName);
                 throw new Exception($"HTTP error during creation: {httpEx.Message}", httpEx);
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error creating entity in {Service}", _serviceName);
                 throw new Exception($"Failed to create entity: {ex.Message}", ex);
             }
         }
@@ -114,7 +154,6 @@ namespace Infrastructure.Services
         {
             try
             {
-                // If T has an ETag property, include it for concurrency control
                 var etagProp = typeof(T).GetProperty("ETag");
                 var etag = etagProp?.GetValue(entity) as string;
 
@@ -124,20 +163,33 @@ namespace Infrastructure.Services
                 };
 
                 if (!string.IsNullOrEmpty(etag))
+                {
                     request.Headers.TryAddWithoutValidation("If-Match", etag);
+                    _logger?.LogDebug("Including ETag header for concurrency control: {ETag}", etag);
+                }
+
+                _logger?.LogDebug("Updating entity {Key} in {Service}", key, _serviceName);
 
                 var response = await _httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
-                return await response.Content.ReadFromJsonAsync<T>(_jsonOptions)
-                    ?? throw new Exception("Update succeeded but response body was empty or invalid.");
+                var updated = await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
+                if (updated == null)
+                {
+                    throw new Exception("Update succeeded but response body was empty or invalid.");
+                }
+
+                _logger?.LogInformation("Entity {Key} updated successfully in {Service}", key, _serviceName);
+                return updated;
             }
             catch (HttpRequestException httpEx)
             {
+                _logger?.LogError(httpEx, "HTTP error during update in {Service}", _serviceName);
                 throw new Exception($"HTTP error during update: {httpEx.Message}", httpEx);
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error updating entity in {Service}", _serviceName);
                 throw new Exception($"Failed to update entity: {ex.Message}", ex);
             }
         }
@@ -147,15 +199,21 @@ namespace Infrastructure.Services
         {
             try
             {
+                _logger?.LogDebug("Deleting entity {Key} from {Service}", key, _serviceName);
+
                 var response = await _httpClient.DeleteAsync($"{_serviceName}('{key}')");
                 response.EnsureSuccessStatusCode();
+
+                _logger?.LogInformation("Entity {Key} deleted successfully from {Service}", key, _serviceName);
             }
             catch (HttpRequestException httpEx)
             {
+                _logger?.LogError(httpEx, "HTTP error during deletion in {Service}", _serviceName);
                 throw new Exception($"HTTP error during deletion: {httpEx.Message}", httpEx);
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error deleting entity from {Service}", _serviceName);
                 throw new Exception($"Failed to delete entity: {ex.Message}", ex);
             }
         }

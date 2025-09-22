@@ -16,4 +16,7 @@
 		<PackageTags>NAV;OData;SOAP;Core</PackageTags>
 		<RepositoryUrl>https://github.com/Gedions/NAV-client-library.git</RepositoryUrl>
 	</PropertyGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Shared\Shared.csproj" />
+	</ItemGroup>
 </Project>
