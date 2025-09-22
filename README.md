@@ -188,12 +188,3 @@ public class MyAppService
     }
 }
 ```
-
-## Next Steps
-
-- Add option validation (e.g. `IValidateOptions<T>`).  
-- Use [dotnet user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) for sensitive data.  
-- Configure timeouts or custom headers on `HttpClient`.  
-- Prepare for NuGet packaging in your `.csproj`.
-
----
