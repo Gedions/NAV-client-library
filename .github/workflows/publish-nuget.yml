@@ -1,4 +1,5 @@
-name: CI / Publish NuGet Package
+name: CI / Publish NuGet Packages
+
 permissions:
   contents: read
   packages: write
@@ -11,28 +12,61 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    env:
+      # Define the list of projects here as a space-separated string
+      PROJECTS: "Infrastructure/Infrastructure.csproj Core/Core.csproj Shared/Shared.csproj"
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore Infrastructure/Infrastructure.csproj
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Using version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Build
-        run: dotnet build Infrastructure/Infrastructure.csproj --configuration Release --no-restore
-
-      - name: Pack
-        run: dotnet pack Infrastructure/Infrastructure.csproj --configuration Release --no-build --output ./nupkg
-
-      - name: Publish to GitHub Packages
+      - name: Build, Pack, and Push NuGet Packages
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          dotnet nuget push ./nupkg/*.nupkg \
-            --api-key $NUGET_API_KEY \
-            --source "https://api.nuget.org/v3/index.json" \
-            --skip-duplicate
+          # Convert space-separated string into an array
+          IFS=' ' read -r -a PROJECT_ARRAY <<< "$PROJECTS"
+
+          for PROJECT in "${PROJECT_ARRAY[@]}"; do
+            echo "Processing $PROJECT"
+
+            # Restore
+            dotnet restore "$PROJECT"
+
+            # Build
+            dotnet build "$PROJECT" --configuration Release --no-restore
+
+            # Pack
+            dotnet pack "$PROJECT" \
+              --configuration Release \
+              --no-build \
+              -p:PackageVersion=$VERSION \
+              --output ./nupkg
+
+            # Push to NuGet.org
+            dotnet nuget push ./nupkg/*.nupkg \
+              --api-key $NUGET_API_KEY \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+
+            # Push to GitHub Packages
+            dotnet nuget push ./nupkg/*.nupkg \
+              --api-key $GITHUB_TOKEN \
+              --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+              --skip-duplicate
+
+            # Clean nupkg folder for next package
+            rm -f ./nupkg/*.nupkg
+          done
