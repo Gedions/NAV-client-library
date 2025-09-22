@@ -24,7 +24,7 @@ namespace Infrastructure.Services
         protected readonly string _serviceName;
 
         /// <summary>
-        /// 
+        /// Logger
         /// </summary>
         private readonly ILogger<GenericODataService<T>> _logger;
 
