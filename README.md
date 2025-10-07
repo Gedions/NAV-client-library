@@ -1,16 +1,27 @@
 # NAV Client Library
 
-This library provides generic OData V4 and SOAP client services for Microsoft Dynamics NAV / Business Central.
+This library provides generic OData V4 and SOAP client services for Microsoft Dynamics NAV / Dynamics 365 Business Central.
+
+## Installation
+Using .NET CLI
+
+`dotnet add package Og.Nav.Client.Library --version 1.0.4`
+
+`dotnet add package Og.Nav.Core --version 1.0.0`
+
+`dotnet add package Og.Nav.Shared --version 1.0.0`
+
+Alternatively you can use Manage Nuget Packages from Visual Studio IDE
 
 ## Prerequisites
 
 - .NET 8.0 or later
-- A NAV/BC instance with OData V4 and SOAP web services enabled
+- A NAV/BC instance with OData V4 and/or SOAP web services enabled
 - Valid credentials for basic or token authentication
 
 ## Configuration
 
-Add the following sections to your `appsettings.json`:
+Add the following sections to your `appsettings.json`
 
 ```json
 {
@@ -34,6 +45,10 @@ Add the following sections to your `appsettings.json`:
   }
 }
 ```
+
+You can store sensitive information such as username and password using secrets.
+
+If your NAV/ D365BC uses windows authentication you can ignore the username and password section.
 
 ### Configuration Classes
 
@@ -101,10 +116,6 @@ using Microsoft.Extensions.Options;
 using Core.Interfaces;
 using Infrastructure.Services;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddHttpContextAccessor();
-
 // Bind configuration
 builder.Services.Configure<NavSoapServiceConfig>(
     builder.Configuration.GetSection("NavSoapService"));
@@ -112,8 +123,8 @@ builder.Services.Configure<NavODataServiceConfig>(
     builder.Configuration.GetSection("NavODataService"));
 
 // Register factories
-builder.Services.AddSingleton<INavSoapServiceFactory, NavSoapServiceFactory>();
-builder.Services.AddSingleton<INavODataServiceFactory, NavODataServiceFactory>();
+builder.Services.AddSingleton<INavSoapServiceFactory, NavSoapServiceFactory>(); // For working with SOAP web service
+builder.Services.AddSingleton<INavODataServiceFactory, NavODataServiceFactory>(); // For working with ODataV4
 
 // Named HttpClient for SOAP
 builder.Services.AddHttpClient("NavSoapClient", (sp, client) =>
@@ -157,8 +168,19 @@ builder.Services.AddHttpClient("NavODataClient", (sp, client) =>
     }
 });
 
-var app = builder.Build();
-app.Run();
+// For Windows Authentication on NAV/ D365BC
+builder.Services.AddHttpClient("NavSoapClient", (sp, client) =>
+{
+    var config = sp.GetRequiredService<IOptions<NavSoapServiceConfig>>().Value;
+    client.BaseAddress = config.BaseUri;
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+}).ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        handler.UseDefaultCredentials = true;
+        return handler;
+    });
+
 ```
 
 ## Usage
@@ -181,10 +203,9 @@ public class MyAppService
 
     public async Task Run()
     {
-        var usCustomers = await _customers.GetEntitiesAsync("Country eq 'US'");
+        var usCustomers = await _customers.GetEntitiesAsync("Country eq 'US'"); // example using ODataV4 web services
         var order       = await _orders.ReadAsync(
-            new XElement("OrderId", "SO-1001"));
-        // ...
+            new XElement("OrderId", "SO-1001")); // example using SOAP web service
     }
 }
 ```
