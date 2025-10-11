@@ -6,10 +6,10 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
 		<PackageId>Og.Nav.Client.Library</PackageId>
-		<Version>1.0.4</Version>
+		<Version>1.0.5</Version>
 		<Authors>Job Gedions</Authors>
 		<Description>OData V4 and SOAP client for Dynamics NAV/BC</Description>
-		<PackageTags>NAV;OData;SOAP;BusinessCentral</PackageTags>
+		<PackageTags>NAV;OData;SOAP;BusinessCentral;D365BC</PackageTags>
 		<RepositoryUrl>https://github.com/Gedions/NAV-client-library.git</RepositoryUrl>
 	</PropertyGroup>
 
