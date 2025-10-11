@@ -43,18 +43,26 @@ namespace Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<T>> ReadAllAsync(XElement filtersXml)
+        public async Task<List<T>> ReadAllAsync(IEnumerable<XElement> filters = null, string bookmarkKey = null, int setSize = 1000)
         {
             _logger.LogInformation("Reading all records from {Service}", _serviceName);
 
-            var body = new XElement(XName.Get("ReadMultiple", Ns),
-                filtersXml,
-                new XElement(XName.Get("setSize", Ns), 1000)
-            );
+            var body = new XElement(XName.Get("ReadMultiple", Ns));
+
+            if (filters != null)
+            {
+                foreach (var filter in filters)
+                    body.Add(filter);
+            }
+
+            if (!string.IsNullOrEmpty(bookmarkKey))
+                body.Add(new XElement(XName.Get("bookmarkKey", Ns), bookmarkKey));
+
+            body.Add(new XElement(XName.Get("setSize", Ns), setSize));
 
             var envelope = SoapEnvelopeBuilder.BuildEnvelope(body);
 
-            _logger.LogDebug("Envelop Content {Envelope}", envelope.ToString());
+            _logger.LogDebug("Envelope Content {Envelope}", envelope.ToString());
 
             var response = await SendSoapRequestAsync(envelope.ToString(), "page/ReadMultiple");
 
@@ -127,7 +135,7 @@ namespace Infrastructure.Services
             _logger.LogDebug("Envelope Content {Envelope}", envelope.ToString());
 
             var response = await SendSoapCodeunitRequestAsync(serviceName, envelope.ToString(), $"codeunit/{serviceName}");
-            
+
             return SoapResponseParser.ParseReadCodeunit(response, methodName, _serviceName);
         }
 
@@ -152,16 +160,16 @@ namespace Infrastructure.Services
                     var fault = TryExtractSoapFault(content);
 
                     _logger.LogError("SOAP error {StatusCode}: {Fault}", (int)response.StatusCode, fault ?? content);
-                    
+
                     throw new Exception($"SOAP Error: HTTP {(int)response.StatusCode} - {fault ?? content}");
                 }
 
                 if (content.Contains("<faultcode>") || content.Contains("<Fault>"))
                 {
                     var fault = TryExtractSoapFault(content);
-                    
+
                     _logger.LogError("SOAP fault in {Service}: {Fault}", _serviceName, fault);
-                    
+
                     throw new Exception($"SOAP Fault: {fault}");
                 }
 
