@@ -43,7 +43,7 @@ namespace Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<T>> ReadAllAsync(IEnumerable<XElement> filters = null, string bookmarkKey = null, int setSize = 1000)
+        public async Task<List<T>> ReadAllAsync(IEnumerable<XElement> filters = null, string bookmarkKey = null, int setSize = 0)
         {
             _logger.LogInformation("Reading all records from {Service}", _serviceName);
 
