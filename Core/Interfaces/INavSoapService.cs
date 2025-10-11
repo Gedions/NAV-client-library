@@ -10,13 +10,25 @@ namespace Core.Interfaces
     public interface INavSoapService<T> where T : class
     {
         /// <summary>
-        /// Reads multiple records matching the given filters.
+        /// Reads multiple records from the NAV/BC service that match the specified filters.
         /// </summary>
-        /// <param name="filtersXml">
-        /// An <see cref="XElement"/> containing <c>Field</c> elements to filter by.
+        /// <param name="filters">
+        /// A collection of <see cref="XElement"/> objects representing the filters to apply.  
+        /// Each element should contain a <c>Field</c> and a <c>Criteria</c> node.
         /// </param>
-        /// <returns>A task resolving to the list of matching records.</returns>
-        Task<List<T>> ReadAllAsync(XElement filtersXml);
+        /// <param name="bookmarkKey">
+        /// An optional bookmark key used for pagination when fetching subsequent result sets.  
+        /// If <c>null</c>, the request retrieves records from the beginning.
+        /// </param>
+        /// <param name="setSize">
+        /// The maximum number of records to return in the result set.  
+        /// If set to <c>0</c>, the default NAV/BC page size is used.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation.  
+        /// The task result contains a list of records matching the given filters.
+        /// </returns>
+        Task<List<T>> ReadAllAsync(IEnumerable<XElement> filters = null, string bookmarkKey = null, int setSize = 0);
 
         /// <summary>
         /// Reads a single record by its key fields.

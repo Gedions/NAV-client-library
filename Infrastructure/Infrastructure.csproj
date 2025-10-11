@@ -6,7 +6,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
 		<PackageId>Og.Nav.Client.Library</PackageId>
-		<Version>1.0.5</Version>
+		<Version>2.0.0</Version>
 		<Authors>Job Gedions</Authors>
 		<Description>OData V4 and SOAP client for Dynamics NAV/BC</Description>
 		<PackageTags>NAV;OData;SOAP;BusinessCentral;D365BC</PackageTags>
@@ -15,8 +15,8 @@
 
 	<ItemGroup>
 		<!-- Now reference your two packages instead of the Csprojs -->
-		<PackageReference Include="Og.Nav.Core" Version="1.0.0" />
-		<PackageReference Include="Og.Nav.Shared" Version="1.0.0" />
+		<PackageReference Include="Og.Nav.Core" Version="2.0.0" />
+		<PackageReference Include="Og.Nav.Shared" Version="2.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
 	</ItemGroup>
 </Project>
