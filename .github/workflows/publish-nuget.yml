@@ -83,7 +83,7 @@ jobs:
 
   verify-publish:
     runs-on: ubuntu-latest
-    needs: [publish-infrastructure, publish-core, publish-shared]
+    needs: [setup, publish-infrastructure, publish-core, publish-shared]
     env:
       VERSION: ${{ needs.setup.outputs.version }}
     steps:
