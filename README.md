@@ -5,11 +5,11 @@ This library provides generic OData V4 and SOAP client services for Microsoft Dy
 ## Installation
 Using .NET CLI
 
-`dotnet add package Og.Nav.Client.Library --version 1.0.4`
+`dotnet add package Og.Nav.Client.Library --version 2.0.1`
 
-`dotnet add package Og.Nav.Core --version 1.0.0`
+`dotnet add package Og.Nav.Core --version 2.0.2`
 
-`dotnet add package Og.Nav.Shared --version 1.0.0`
+`dotnet add package Og.Nav.Shared --version 2.0.2`
 
 Alternatively you can use Manage Nuget Packages from Visual Studio IDE
 
